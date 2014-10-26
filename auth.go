@@ -15,11 +15,11 @@ import (
 var apiURL *url.URL
 var auth *Auth
 
-var ErrResponseNotFound = errors.New("expected a RESPONSE element, but there were none")
-var ErrResponseError = "response contained an error status: %s"
-var ErrUnrecognisedStatus = "unrecognised status: %s"
-var ErrUnhandleableStatus = fmt.Sprintf("not sure what to do with codes other than %d: got %s", http.StatusOK, "%s")
-var ErrUnmarshalError = "error unmarshalling xml: %s\n raw xml: %s"
+var errResponseNotFound = errors.New("expected a RESPONSE element, but there were none")
+var errResponseError = "response contained an error status: %s"
+var errUnrecognisedStatus = "unrecognised status: %s"
+var errUnhandleableStatus = fmt.Sprintf("not sure what to do with codes other than %d: got %s", http.StatusOK, "%s")
+var errUnmarshalError = "error unmarshalling xml: %s\n raw xml: %s"
 
 var register string = "REGISTER"
 
@@ -78,16 +78,16 @@ func Register(clientID, clientIDTag string) (string, error) {
 		return "", err
 	}
 	if len(resps.Responses) == 0 {
-		return "", ErrResponseNotFound
+		return "", errResponseNotFound
 	}
 	switch resps.Responses[0].Status {
 	case "ERROR":
-		return "", fmt.Errorf(ErrResponseError, resps.Message)
+		return "", fmt.Errorf(errResponseError, resps.Message)
 	case "OK":
 		Authenticate(clientID, clientIDTag, resps.Responses[0].User)
 		return resps.Responses[0].User, nil
 	default:
-		return "", fmt.Errorf(ErrUnrecognisedStatus, resps.Responses[0].Status)
+		return "", fmt.Errorf(errUnrecognisedStatus, resps.Responses[0].Status)
 	}
 }
 
@@ -106,7 +106,7 @@ var post = func(q Queries) (Responses, error) {
 		return Responses{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return Responses{}, fmt.Errorf(ErrUnhandleableStatus, resp.Status)
+		return Responses{}, fmt.Errorf(errUnhandleableStatus, resp.Status)
 	}
 	_, err = io.Copy(&buf, resp.Body)
 	if err != nil {
@@ -116,7 +116,7 @@ var post = func(q Queries) (Responses, error) {
 	fmt.Println(buf.String())
 	err = xml.Unmarshal([]byte(buf.String()), &r)
 	if err != nil {
-		return Responses{}, fmt.Errorf(ErrUnmarshalError, err, buf.String())
+		return Responses{}, fmt.Errorf(errUnmarshalError, err, buf.String())
 	}
 	return r, nil
 }
